@@ -1,11 +1,11 @@
-In this tutorial you will create a simple universal app deployed on ZetaChain,
-which emits when called from a connected chain.
+In this tutorial, you will create a simple Universal App on ZetaChain. This app
+will emit an event when it receives a cross-chain call from a connected chain.
 
-By the end of this tutorial, you will have learned how to:
+By the end of this tutorial, you will understand how to:
 
-- Build a simple universal app
-- Deploy the universal app on localnet
-- Use the Gateway on a connected chain to call a universal app
+- Build a basic Universal App
+- Deploy it on ZetaChain Localnet
+- Use a Gateway on a connected chain to call your Universal App
 
 <iframe
   style={{ border: "1px solid rgba(0,0,0,.1)", marginTop: "2rem", borderRadius: "0.5rem" }}
@@ -15,20 +15,43 @@ By the end of this tutorial, you will have learned how to:
   allowfullscreen
 ></iframe>
 
+## Prerequisites
+
+Before you begin, make sure you've completed the following tutorials:
+
+- [Introduction to Universal Apps](/start/app/)
+- [Getting Started with ZetaChain](/developers/tutorials/intro)
+
 ## Set Up Your Environment
 
-Start by cloning the example contracts repository and installing the necessary
-dependencies:
+To kickstart your ZetaChain project, begin by initializing a new project using
+the ZetaChain CLI (command-line interface). This will set up the foundational
+project structure.
 
 ```bash
-git clone https://github.com/zeta-chain/example-contracts
-cd example-contracts/examples/hello
+npx zetachain@latest new --project hello
+cd hello
 yarn
+forge soldeer update
 ```
+
+First, `npx zetachain@latest new --project hello` uses `npx` to execute the
+latest version of the `zetachain` package, creating a new project directory
+named `hello`.
+
+Then, `cd hello` navigates you into the newly created project directory.
+
+Next, `yarn` (or `npm install` if you prefer npm) installs all the necessary
+project dependencies as defined in the `package.json` file. This ensures that
+all required libraries and tools are available for your development environment.
+
+Finally, `foundry soldeer update` synchronizes and updates your Solidity
+dependencies managed by Foundry’s Soldeer, ensuring that your contracts are
+built against the latest compatible versions of external libraries.
 
 ## Universal Contract
 
-A universal app is a contract that inherits from `UniversalContract` interface.
+A Universal App is a contract that implements the `UniversalContract` interface.
 
 ```solidity filename="contracts/Universal.sol"
 // SPDX-License-Identifier: MIT
@@ -63,117 +86,290 @@ contract Universal is UniversalContract {
 }
 ```
 
-The constructor accepts the ZetaChain's Gateway address and saves it into a
-state variable. Gateway is used to make outgoing contract calls and token
+The constructor takes ZetaChain’s Gateway address and stores it in a state
+variable. The Gateway is used for making outbound contract calls and token
 withdrawals.
 
-A universal contract must implement the `onCall` function. `onCall` is a
-function that gets triggered when the contract receives a call from a connected
-chain through the Gateway. This function processes the incoming data, which
-includes:
+A universal contract must implement the `onCall` function. This function is
+triggered when the contract receives a call from a connected chain via the
+Gateway. The function processes incoming data, which includes:
 
 - `context`: A `MessageContext` struct containing:
-  - `chainID`: The integer ID of the connected chain from which the cross-chain
-    call originated.
-  - `sender`: The address (EOA or contract) that initiated the gateway call on
-    the connected chain.
-  - `origin`: deprecated.
-- `zrc20`: The address of the ZRC-20 token representing the asset from the
-  source chain.
-- `amount`: The number of tokens transferred.
-- `message`: The encoded data payload.
+  - `chainID`: The chain ID of the connected chain that initiated the
+    cross-chain call.
+  - `sender`: The address (EOA or contract) that called the Gateway on the
+    connected chain.
+  - `origin`: Deprecated.
+- `zrc20`: The address of the ZRC-20 token representing assets from the source
+  chain.
+- `amount`: The amount of tokens transferred.
+- `message`: The encoded payload data.
 
-In this example, `onCall` simply decodes the message into a variable and emits
-an event.
+In this example, `onCall` decodes the message into a string and emits an event.
 
 `onCall` should only be called by the Gateway to ensure that it is only called
 as a response to a call on a connected chain and that you can trust the values
 of the function parameters.
 
-## Options 1: Deploy on Localnet
+## Option 1: Deploy on Localnet
 
-[Localnet](/developers/tutorials/localnet) is a local development environment,
-which simulates the behavior of Gateways deployed on multiple EVM blockchains.
-Start localnet:
+This section guides you through the process of deploying and interacting with a
+Universal Contract on ZetaChain [Localnet](/reference/localnet). Working with a
+Localnet provides a safe and isolated environment for testing and development
+without incurring real network fees or affecting live deployments.
 
-```
-npx hardhat localnet
-```
+> For optimal workflow, it is highly recommended to use a split terminal or two
+> separate terminal windows. This allows you to keep the localnet running
+> continuously in one terminal while executing commands and interacting with
+> your project in the other, streamlining your development process.
 
-```
-npx hardhat compile --force
-```
+The first step is to launch your local ZetaChain network. This will simulate a
+complete ZetaChain environment on your machine.
 
-Deploy the universal contract and pass ZetaChain's Gateway address to the
-constructor. You can find the Gateway address in the output of Localnet.
-
-```
-npx hardhat deploy --network localhost --gateway 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
-```
+- Open a new terminal window dedicated to running the Localnet.
+- In this terminal, execute the following command:
 
 ```
-🚀 Successfully deployed "Universal" contract on localhost.
-📜 Contract address: 0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7
+npx zetachain localnet start
 ```
 
-## Make a Call to the Universal App
+This command will initiate the local ZetaChain network. It may take a moment for
+all components to spin up. You'll know the localnet is ready when you see a
+formatted table printed in the terminal. This table will display crucial
+contract addresses for different chains, including ZETACHAIN, ETHEREUM, and BNB.
+These addresses are essential for interacting with your local network.
 
-To call the universal app deployed on ZetaChain from a connected chain, make a
-call to the Gateway contract on a connected EVM chain using the `evm-call` task:
+> **Do not close this terminal!** It is imperative that the localnet remains
+> running throughout the subsequent steps. Closing this terminal will shut down
+> your local network, and you'll need to restart it to continue.
+
+Once Localnet is active, the next step is to compile your smart contracts. This
+process translates your human-readable Solidity code into bytecode that the
+Ethereum Virtual Machine (EVM) can understand and execute.
+
+- Open a second terminal window (or split your existing terminal) dedicated to
+  your project commands.
+- Navigate to your project directory (if you're not already there).
+- Run the following command:
 
 ```
-npx hardhat evm-call \
-  --network localhost \
-  --gateway-evm 0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0 \
-  --receiver 0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7 \
-  --types '["string"]' alice
+forge build
 ```
 
-Pass the EVM Gateway Address from the Localnet's table of addresses and the
-universal contract address as the receiver. A universal app expects to receive a
-single string in the message, so pass the appropriate type and value to the
-command.
+The `forge build` command tells Foundry to compile all Solidity smart contracts
+within your project, ensuring you're working with the latest compiled versions.
+Successful compilation will generate bytecode for your contracts.
 
-After the transaction is processed you will see an `[ZetaChain]: Event from onCall` message in the terminal where Localnet is running.
+To deploy and interact with contracts on the ZetaChain localnet, you'll need the
+address of the ZetaChain Gateway contract. This contract acts as the entry point
+for cross-chain interactions on ZetaChain.
+
+- While your localnet is still running in its dedicated terminal, carefully
+  examine its output.
+- Copy the Gateway contract address from the localnet terminal output. Look for
+  the row labeled `gateway` under the `ZETACHAIN` section. It will typically
+  appear in a format similar to this:
+
+```
+| gateway │ '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6' |
+```
+
+Copy only the hexadecimal address (e.g.,
+`0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6`). Do not include the single quotes
+or any other surrounding text.
+
+Alternatively, run the following command to get the Gateway address
+programmatically:
+
+```
+GATEWAY_ZETACHAIN=$(jq -r '.["31337"].contracts[] | select(.contractType == "gateway") | .address' ~/.zetachain/localnet/registry.json) && echo $GATEWAY_ZETACHAIN
+```
+
+Fetch a private key with pre-funded tokens on the connected chain:
+
+```
+PRIVATE_KEY=$(jq -r '.private_keys[0]' ~/.zetachain/localnet/anvil.json) && echo $PRIVATE_KEY
+```
+
+Deploy the universal contract and provide the Gateway address in the
+constructor:
+
+```
+UNIVERSAL=$(forge create Universal \
+  --rpc-url http://localhost:8545 \
+  --private-key $PRIVATE_KEY \
+  --evm-version paris \
+  --broadcast \
+  --json \
+  --constructor-args $GATEWAY_ZETACHAIN | jq -r .deployedTo) && echo $UNIVERSAL
+```
+
+### Make a Call to the Universal App
+
+To call the universal app deployed on ZetaChain from a connected chain, send a
+transaction to the Gateway contract on the connected EVM chain.
+
+Fetch the Gateway address for the connected chain:
+
+```
+GATEWAY_EVM=$(jq -r '.["11155112"].contracts[] | select(.contractType == "gateway") | .address' ~/.zetachain/localnet/registry.json) && echo $GATEWAY_EVM
+```
+
+Alternatively, you can copy the Gateway address directly from the table printed
+in the Localnet terminal output when Localnet starts.
+
+Execute the `call` method on the connected chain’s Gateway to send a message to
+the universal contract deployed on ZetaChain.
+
+```
+npx zetachain evm call \
+  --rpc http://localhost:8545 \
+  --gateway $GATEWAY_EVM \
+  --receiver $UNIVERSAL \
+  --private-key $PRIVATE_KEY \
+  --types string \
+  --values hello
+```
+
+Once the transaction is processed, you’ll see an `[ZetaChain]: Event from onCall` log in the Localnet terminal.
 
 ## Option 2: Deploy on Testnet
 
-Before proceeding, you might want to check out the [Testnet
-Setup](/developers/tutorials/testnet) guide to learn how to set up an account
-and request testnet tokens.
+### Wallet & Environment Setup
 
-Deploy the contract to ZetaChain's testnet using the Gateway address from
-[`Contract Addresses page`](/reference/network/contracts/).
+To interact with and deploy smart contracts on ZetaChain, you'll need an
+EVM-compatible private key and a secure way to manage it within your project
+environment.
 
-```
-npx hardhat deploy --network zeta_testnet --gateway 0x6c533f7fe93fae114d0954697069df33c9b74fd7
-```
+An EVM-compatible private key is fundamental for signing transactions, which are
+necessary for deploying and interacting with smart contracts on the ZetaChain
+EVM. You have a couple of reliable options for generating this key:
 
-```
-🔑 Using account: 0x4955a3F38ff86ae92A914445099caa8eA2B9bA32
-
-🚀 Successfully deployed "Universal" contract on zeta_testnet.
-📜 Contract address: 0x11998e1A5D2e770753263376ceE78B14c9617f16
-```
-
-Make a transaction to the Gateway on the Base Sepolia testnet to make a
-cross-chain call to the universal app on ZetaChain. Make sure to use Gateway
-address on Base Sepolia.
+- Using MetaMask: MetaMask is a popular browser extension that serves as a
+  cryptocurrency wallet and a gateway to decentralized applications. You can
+  create a new wallet in MetaMask, and it will generate a private key for you.
+  Be sure to back up your seed phrase securely.
+- Using cast CLI: For a quick and direct generation via the command line, you
+  can use the following command:
 
 ```
-npx hardhat evm-call \
-  --network base_sepolia \
-  --gateway-evm 0x0c487a766110c85d301d96e33579c5b317fa4995 \
-  --receiver 0x11998e1A5D2e770753263376ceE78B14c9617f16 \
-  --types '["string"]' alice
+PRIVATE_KEY=$(cast wallet new --json | jq -r '.[0].private_key') && echo $PRIVATE_KEY
 ```
 
+This command leverages Foundry’s `cast` utility to generate a new EVM wallet.
+The `--json` flag outputs the wallet details in JSON format, and the `jq` query
+extracts the `private_key` field, printing it as a 64-character hexadecimal
+string.
+
+### Deploy the Contract on ZetaChain
+
+Deploy the contract to ZetaChain’s testnet using the Gateway address from the
+[Contract Addresses page](/reference/network/contracts/):
+
 ```
-Transaction hash: 0x3fbed0a3dc48eda00212aff6e930940d84b142f7da316b9186f0c68edd0793b2
+UNIVERSAL=$(forge create Universal \
+  --rpc-url https://zetachain-athens-evm.blockpi.network/v1/rpc/public \
+  --private-key $PRIVATE_KEY \
+  --broadcast \
+  --json \
+  --constructor-args 0x6c533f7fe93fae114d0954697069df33c9b74fd7 | jq -r .deployedTo)
 ```
 
-https://sepolia.basescan.org/tx/0x3fbed0a3dc48eda00212aff6e930940d84b142f7da316b9186f0c68edd0793b2
+### Call a Universal Contract from Base
 
-You can track the progress of a cross-chain transaction using ZetaChain's API:
+This section details the process of initiating a cross-chain transaction from a
+connected testnet, specifically Base Sepolia, to interact with a universal
+application deployed on ZetaChain. The process involves two primary steps:
+making the initial transaction and then tracking its cross-chain status.
 
-https://zetachain-athens.blockpi.network/lcd/v1/public/zeta-chain/crosschain/inboundHashToCctxData/0x3fbed0a3dc48eda00212aff6e930940d84b142f7da316b9186f0c68edd0793b2
+To call the universal app on ZetaChain, a transaction must be sent to the
+Gateway on Base Sepolia. This is achieved using the `npx zetachain evm call`
+command, which facilitates the execution of an EVM (Ethereum Virtual Machine)
+transaction.
+
+The command structure is as follows:
+
+```
+npx zetachain evm call \
+  --chain-id 84532 \
+  --receiver $UNIVERSAL \
+  --private-key $PRIVATE_KEY \
+  --types string \
+  --values hello
+```
+
+Explanation of Parameters:
+
+- `--chain-id 84532`: This specifies the chain ID of Base Sepolia, the source
+  network for the transaction.
+- `--receiver $UNIVERSAL`: This parameter designates the address of the
+  universal contract on ZetaChain that the transaction intends to interact with.
+  The `$UNIVERSAL` variable should be replaced with the actual contract address.
+- `--private-key $PRIVATE_KEY`: This is the private key associated with the
+  sending wallet on Base Sepolia. It is crucial for signing the transaction. The
+  `$PRIVATE_KEY` variable must be replaced with the actual private key.
+- `--types string`: This indicates the data type of the value being sent. In
+  this case, it's a string.
+- `--values hello`: This is the actual value being passed to the universal
+  application. Here, the string "hello" is sent as a message to the universal
+  contract on ZetaChain.
+
+Upon successful execution of this command, a transaction hash is generated,
+confirming the initiation of the transaction on Base Sepolia.
+
+```
+Transaction hash: 0x89308870b0863c5ae48dc783059277cbcf4296b1b343413ac543418262a4ccbc
+```
+
+You can verify the transaction on the Base Sepolia block explorer:
+
+https://sepolia.basescan.org/tx/0x89308870b0863c5ae48dc783059277cbcf4296b1b343413ac543418262a4ccbc
+
+### Tracking the Cross-Chain Transaction Status
+
+After the transaction is initiated on Base Sepolia, ZetaChain's protocol
+facilitates its cross-chain transfer and execution on the destination chain
+(ZetaChain). To monitor the status of this cross-chain transaction, the `npx zetachain query cctx` command is used, providing real-time updates on the
+transaction's journey.
+
+The command for tracking is:
+
+```
+npx zetachain query cctx --hash 0x89308870b0863c5ae48dc783059277cbcf4296b1b343413ac543418262a4ccbc
+```
+
+- `--hash 0x89308870b0863c5ae48dc783059277cbcf4296b1b343413ac543418262a4ccbc`:
+  This refers to the transaction hash obtained from the initial transaction on
+  Base Sepolia.
+
+Example Output and Interpretation:
+
+```
+84532 → 7001 ✅ OutboundMined
+CCTX:     0x56f9bc09dc646b13aa713b56348e8a53ea39759146afad61e66973791b752e3bTx
+Tx Hash:  0x89308870b0863c5ae48dc783059277cbcf4296b1b343413ac543418262a4ccbc (on chain 84532)
+Tx Hash:  0x34edd96c8a7b2bd9d530de0e49bb5e8625204a77b77cc79133814e1814f79ebc (on chain 7001)
+Sender:   0x4955a3F38ff86ae92A914445099caa8eA2B9bA32
+Receiver: 0xFeb4F33d424D6685104624d985095dacab567151
+Message:  0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000
+```
+
+Key Information from the Output:
+
+- `84532 → 7001`: This clearly indicates the cross-chain flow, from Base Sepolia
+  (chain ID 84532) to ZetaChain (chain ID 7001). The ✅ symbol signifies a
+  successful outbound mining of the cross-chain transaction.
+- `OutboundMinedCCTX: 0x56f9bc09dc646b13aa713b56348e8a53ea39759146afad61e66973791b752e3b`: This is
+  the hash of the Cross-Chain Transaction (CCTX) on ZetaChain, representing the
+  internal identifier for this specific cross-chain operation.
+- `Tx Hash: 0x89308870b0863c5ae48dc783059277cbcf4296b1b343413ac543418262a4ccbc (on chain 84532)`: This confirms the original transaction hash on the source
+  chain (Base Sepolia).
+- `Tx Hash: 0x34edd96c8a7b2bd9d530de0e49bb5e8625204a77b77cc79133814e1814f79ebc (on chain 7001)`: This is the transaction hash of the execution on ZetaChain,
+  indicating that the universal application has been successfully called on the
+  destination chain.
+- `Sender: 0x4955a3F38ff86ae92A914445099caa8eA2B9bA32`: The address of the
+  sender on the originating chain.
+- `Receiver: 0xFeb4F33d424D6685104624d985095dacab567151`: The address of the
+  receiver contract on ZetaChain, which is the universal application in this
+  context.
+- `Message: 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000`

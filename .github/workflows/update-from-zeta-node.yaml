@@ -21,15 +21,14 @@ jobs:
 
       - name: Update module docs
         run: |
-          mkdir -p src/pages/architecture/modules
-          rm -rf src/pages/architecture/modules/*
-          cp -r node/docs/spec/* src/pages/architecture/modules/
+          mkdir -p src/pages/developers/architecture/
+          rm -f src/pages/developers/architecture/modules.mdx
+          cp -r node/docs/spec/generated.md src/pages/developers/architecture/modules.mdx
 
       - name: Update zetacored CLI docs
         run: |
-          mkdir -p src/pages/architecture/zetacored
-          rm -rf src/pages/architecture/zetacored/*
-          cp -r node/docs/cli/zetacored/* src/pages/architecture/zetacored/
+          mkdir -p src/pages/developers/architecture
+          cp node/docs/cli/zetacored/cli.md src/pages/developers/architecture/zetacored.md
 
       - name: Update OpenAPI specs
         run: |
@@ -42,7 +41,7 @@ jobs:
       - name: Check for changes
         id: check-changes
         run: |
-          git add src/pages/architecture/modules
+          git add src/pages/developers/architecture/
           git add public/data/openapi.swagger.yaml
           git diff --cached --exit-code || echo "::set-output name=changed::true"
 

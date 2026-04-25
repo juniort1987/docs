@@ -5,38 +5,48 @@
     "description": "Learn more about universal apps"
   },
   "hello": {
-    "title": "First Universal App",
+    "title": "First Universal Contract",
     "readTime": "10 min",
-    "description": "Build your first universal app"
+    "description": "Build your first universal contract"
   },
-  "call": {
-    "title": "Call & Deposit",
-    "readTime": "30 min",
-    "description": "Learn the fundamentals of message passing and cross-chain contract calls"
-  },
-  "solana": {
-    "title": "Solana",
-    "readTime": "60 min",
-    "description": "Deposit assets and call universal apps from Solana, make outgoing calls to Solana"
-  },
-  "sui": {
-    "title": "Sui",
-    "readTime": "60 min",
-    "description": "Deposit assets and call universal apps from Sui"
+  "frontend": {
+    "title": "Build a Web App",
+    "readTime": "10 min",
+    "description": "Create a web app to interact with your universal contract: connect a wallet, send cross-chain calls, and track execution"
   },
   "swap": {
     "title": "Swap",
     "readTime": "30 min",
     "description": "Implement a universal swap app compatible with chains like Ethereum, Solana and Bitcoin"
   },
-  "localnet": {
-    "title": "Localnet Setup",
+  "messaging": {
+    "title": "Messaging",
     "readTime": "30 min",
-    "description": "Build and interact with your universal app in a local dev environment"
+    "description": "Learn how to make cross-chain calls between contracts on EVM chains"
   },
-  "testnet": {
-    "title": "Testnet Setup",
+  "call": {
+    "title": "Calls to/from EVM",
+    "readTime": "30 min",
+    "description": "Learn the fundamentals of message passing and cross-chain contract calls"
+  },
+  "solana": {
+    "title": "Calls to/from Solana",
+    "readTime": "60 min",
+    "description": "Deposit assets and call universal apps from Solana, make outgoing calls to Solana"
+  },
+  "sui": {
+    "title": "Calls from Sui",
+    "readTime": "60 min",
+    "description": "Deposit assets and call universal apps from Sui"
+  },
+  "sui-withdraw-and-call": {
+    "title": "Calls to Sui",
+    "readTime": "60 min",
+    "description": "Withdraw assets and call contracts on Sui"
+  },
+  "staking": {
+    "title": "Staking",
     "readTime": "10 min",
-    "description": "Setup your account, request test tokens from the faucet"
+    "description": "Delegate and undelegate ZETA from EVM"
   }
 }

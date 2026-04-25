@@ -1,0 +1,49 @@
+name: Update protocol-contract-ton docs
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # scheduled to run every day at midnight
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout zeta-chain/protocol-contracts-ton repository
+        uses: actions/checkout@v4
+        with:
+          repository: zeta-chain/protocol-contracts-ton
+          path: protocol-contracts-ton
+
+      - name: Update docs
+        run: |
+          mkdir -p src/pages/developers/protocol/
+          rm -f src/pages/developers/protocol/ton.md
+          cp protocol-contracts-ton/docs/gateway.md src/pages/developers/protocol/ton.md
+          rm -rf protocol-contracts-ton
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          git add src/pages/developers/protocol
+          git diff --cached --exit-code || echo "::set-output name=changed::true"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          title: "docs(ton): update protocol contracts"
+          body: |
+            This PR syncs the docs with protocol-contracts-ton
+          commit-message: |
+            "docs(ton): update protocol contracts"
+          base: main
+          branch: docs/updates-from-protocol-contracts-ton
+        if: steps.check-changes.outputs.changed == 'true'

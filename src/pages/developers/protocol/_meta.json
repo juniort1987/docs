@@ -1,0 +1,18 @@
+{
+  "evm": {
+    "title": "ZetaChain and EVM",
+    "description": "ZetaChain and EVM protocol contracts"
+  },
+  "solana": {
+    "title": "Solana",
+    "description": "Solana protocol contracts"
+  },
+  "ton": {
+    "title": "TON",
+    "description": "TON protocol contracts"
+  },
+  "sui": {
+    "title": "Sui",
+    "description": "Sui protocol contracts"
+  }
+}
